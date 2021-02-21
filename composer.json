@@ -2,7 +2,7 @@
     "name": "avantcorp/laravel-zoho-books-client",
     "description": "Zoho Books API Client for Laravel",
     "type": "library",
-    "license": "proprietery",
+    "license": "proprietary",
     "minimum-stability": "stable",
     "authors": [
         {
