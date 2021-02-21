@@ -71,6 +71,6 @@ class ZohoBooksClient extends ZohoClient
     public function deleteRecords(string $resource, string $id)
     {
         return $this->request()
-            ->delete($resource.'/' / $id);
+            ->delete($resource.'/'.$id);
     }
 }
