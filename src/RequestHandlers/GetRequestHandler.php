@@ -10,6 +10,7 @@ class GetRequestHandler extends RequestHandler
     {
         return $this->client
             ->getRecords($resource, ...$arguments)
+            ->throw()
             ->object()
             ->{Str::singular($resource)};
     }
