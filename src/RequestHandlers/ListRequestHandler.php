@@ -13,7 +13,6 @@ class ListRequestHandler extends RequestHandler
             while ($hasMorePage) {
                 $result = $this->client
                     ->listRecords($resource, ...$arguments)
-                    ->throw()
                     ->object();
                 foreach ($result->$resource as $record) {
                     yield $record;

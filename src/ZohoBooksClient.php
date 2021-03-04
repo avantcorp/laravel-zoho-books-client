@@ -47,30 +47,35 @@ class ZohoBooksClient extends ZohoClient
     public function createRecords(string $resource, $data)
     {
         return $this->request()
-            ->post($resource, $data);
+            ->post($resource, $data)
+            ->throw();
     }
 
     public function updateRecords(string $resource, string $id, $data)
     {
         return $this->request()
-            ->put($resource.'/'.$id, $data);
+            ->put($resource.'/'.$id, $data)
+            ->throw();
     }
 
     public function listRecords(string $resource, $query = null)
     {
         return $this->request()
-            ->get($resource, $query);
+            ->get($resource, $query)
+            ->throw();
     }
 
     public function getRecords(string $resource, string $id)
     {
         return $this->request()
-            ->get($resource.'/'.$id);
+            ->get($resource.'/'.$id)
+            ->throw();
     }
 
     public function deleteRecords(string $resource, string $id)
     {
         return $this->request()
-            ->delete($resource.'/'.$id);
+            ->delete($resource.'/'.$id)
+            ->throw();
     }
 }
