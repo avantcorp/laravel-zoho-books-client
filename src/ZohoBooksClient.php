@@ -15,9 +15,16 @@ use Spatie\GuzzleRateLimiterMiddleware\RateLimiterMiddleware;
  *
  * @method Collection listInvoices($query = null)
  * @method getInvoices(string $id)
+ *
+ * @method Collection listInventoryAdjustments($query = null)
+ * @method getInventoryAdjustments(string $id)
  */
 class ZohoBooksClient extends ZohoClient
 {
+    public const RESOURCE_MAP = [
+        'inventoryadjustments' => 'inventory_adjustments'
+    ];
+
     protected string $baseUrl = 'https://books.zoho.com/api/v3/';
 
     public function __call($name, $arguments)

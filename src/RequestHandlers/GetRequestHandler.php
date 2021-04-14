@@ -2,6 +2,8 @@
 
 namespace Avant\ZohoClient\Books\RequestHandlers;
 
+use Avant\ZohoClient\Books\ZohoBooksClient;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class GetRequestHandler extends RequestHandler
@@ -11,6 +13,6 @@ class GetRequestHandler extends RequestHandler
         return $this->client
             ->getRecords($resource, ...$arguments)
             ->object()
-            ->{Str::singular($resource)};
+            ->{Str::singular(Arr::get(ZohoBooksClient::RESOURCE_MAP, $resource, $resource))};
     }
 }
