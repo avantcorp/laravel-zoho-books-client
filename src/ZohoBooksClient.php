@@ -4,25 +4,28 @@ namespace Avant\ZohoClient\Books;
 
 use Avant\ZohoClient\ZohoClient;
 use GuzzleHttp\RequestOptions;
-use Illuminate\Support\Collection;
 use Spatie\GuzzleRateLimiterMiddleware\RateLimiterMiddleware;
 
 /**
- * @method Collection listItems($query = null)
+ * @method \Illuminate\Support\LazyCollection listItems($query = null)
  *
- * @method Collection listBills($query = null)
- * @method getBills(string $id)
+ * @method \Illuminate\Support\LazyCollection listBills($query = null)
+ * @method object getBills(string $id)
  *
- * @method Collection listInvoices($query = null)
- * @method getInvoices(string $id)
+ * @method \Illuminate\Support\LazyCollection listInvoices($query = null)
+ * @method object getInvoices(string $id)
  *
- * @method Collection listInventoryAdjustments($query = null)
- * @method getInventoryAdjustments(string $id)
+ * @method \Illuminate\Support\LazyCollection listInventoryAdjustments($query = null)
+ * @method object getInventoryAdjustments(string $id)
+ *
+ * @method \Illuminate\Support\LazyCollection listCreditNotes($query = null)
+ * @method object getCreditNotes(string $id)
  */
 class ZohoBooksClient extends ZohoClient
 {
     public const RESOURCE_MAP = [
-        'inventoryadjustments' => 'inventory_adjustments'
+        'inventoryadjustments' => 'inventory_adjustments',
+        'creditnotes'          => 'credit_notes',
     ];
 
     protected string $baseUrl = 'https://books.zoho.com/api/v3/';
