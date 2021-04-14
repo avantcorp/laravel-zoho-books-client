@@ -25,7 +25,6 @@ class ZohoBooksClient extends ZohoClient
 {
     public const RESOURCE_MAP = [
         'inventoryadjustments' => 'inventory_adjustments',
-        'creditnotes'          => 'credit_notes',
     ];
 
     protected string $baseUrl = 'https://books.zoho.com/api/v3/';
