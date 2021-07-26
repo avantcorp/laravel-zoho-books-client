@@ -48,7 +48,7 @@ class ZohoBooksClient extends ZohoClient
     protected function request()
     {
         return parent::request()
-            ->withMiddleware(RateLimiterMiddleware::perMinute(100))
+            ->withMiddleware(RateLimiterMiddleware::perMinute(100, new RedisStore()))
             ->withOptions([RequestOptions::QUERY => ['organization_id' => config('services.zoho_client.books.organization_id')]]);
     }
 
