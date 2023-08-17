@@ -30,7 +30,10 @@ class ZohoBooksClient extends ZohoClient
 
     protected string $baseUrl = 'https://www.zohoapis.com/books/v3';
 
-    public function __construct($user, protected readonly string $organizationId) { }
+    public function __construct($user, protected readonly string $organizationId)
+    {
+        parent::__construct($user);
+    }
 
     public function __call($name, $arguments)
     {
@@ -61,7 +64,6 @@ class ZohoBooksClient extends ZohoClient
             'organization_id' => $this->organizationId,
         ]);
     }
-
 
     public function createRecords(string $resource, $data)
     {
