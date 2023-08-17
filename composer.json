@@ -11,6 +11,7 @@
         }
     ],
     "require": {
+        "php": "8.2",
         "avantcorp/laravel-zoho-client": "^3.0",
         "spatie/guzzle-rate-limiter-middleware": "^2.0"
     },

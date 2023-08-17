@@ -28,7 +28,9 @@ class ZohoBooksClient extends ZohoClient
         'vendorcredits'        => 'vendor_credits',
     ];
 
-    protected string $baseUrl = 'https://books.zoho.com/api/v3/';
+    protected string $baseUrl = 'https://www.zohoapis.com/books/v3';
+
+    public function __construct($user, protected readonly string $organizationId) { }
 
     public function __call($name, $arguments)
     {
@@ -50,7 +52,14 @@ class ZohoBooksClient extends ZohoClient
     {
         return parent::request()
             ->withMiddleware(RateLimiterMiddleware::perMinute(100, new RedisStore()))
-            ->withOptions([RequestOptions::QUERY => ['organization_id' => config('services.zoho_client.books.organization_id')]]);
+            ->withOptions([RequestOptions::QUERY => ['organization_id' => $this->organizationId]]);
+    }
+
+    protected function mergeQuery($query): array
+    {
+        return array_merge_recursive((array)$query, [
+            'organization_id' => $this->organizationId,
+        ]);
     }
 
 
@@ -71,7 +80,7 @@ class ZohoBooksClient extends ZohoClient
     public function listRecords(string $resource, $query = null)
     {
         return $this->request()
-            ->get($resource, $query)
+            ->get($resource, $this->mergeQuery($query))
             ->throw();
     }
 
