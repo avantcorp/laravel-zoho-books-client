@@ -108,7 +108,7 @@ class ZohoBooksClient extends ZohoClient
             ->attach(
                 'image',
                 fopen($path, 'r'),
-                pathinfo($path, PATHINFO_FILENAME),
+                pathinfo($path, PATHINFO_BASENAME),
                 ['Content-Type' => mime_content_type($path)]
             )
             ->post("{$resource}/{$id}/images")
