@@ -3,7 +3,9 @@
 namespace Avant\ZohoClient\Books;
 
 use Avant\ZohoClient\ZohoClient;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\RequestOptions;
+use Psr\Http\Message\RequestInterface;
 use Spatie\GuzzleRateLimiterMiddleware\RateLimiterMiddleware;
 
 /**
@@ -55,14 +57,14 @@ class ZohoBooksClient extends ZohoClient
     {
         return parent::request()
             ->withMiddleware(RateLimiterMiddleware::perMinute(100, new RedisStore()))
-            ->withOptions([RequestOptions::QUERY => ['organization_id' => $this->organizationId]]);
-    }
+            ->withMiddleware(Middleware::mapRequest(function (RequestInterface $request) {
+                parse_str($request->getUri()->getQuery(), $uriQuery);
 
-    protected function mergeQuery($query): array
-    {
-        return array_merge_recursive((array)$query, [
-            'organization_id' => $this->organizationId,
-        ]);
+                return $request->withUri($request
+                    ->getUri()
+                    ->withQuery(http_build_query($uriQuery + ['organization_id' => $this->organizationId]))
+                );
+            }));
     }
 
     public function createRecords(string $resource, $data)
@@ -82,7 +84,7 @@ class ZohoBooksClient extends ZohoClient
     public function listRecords(string $resource, $query = null)
     {
         return $this->request()
-            ->get($resource, $this->mergeQuery($query))
+            ->get($resource, $query)
             ->throw();
     }
 
@@ -98,5 +100,18 @@ class ZohoBooksClient extends ZohoClient
         return $this->request()
             ->delete($resource.'/'.$id)
             ->throw();
+    }
+
+    public function uploadImage(string $resource, string $id, string $path)
+    {
+        return $this->request()
+            ->attach(
+                'image',
+                fopen($path, 'r'),
+                pathinfo($path, PATHINFO_FILENAME),
+                ['Content-Type' => mime_content_type($path)]
+            )
+            ->post("{$resource}/{$id}/images")
+            ->object();
     }
 }
