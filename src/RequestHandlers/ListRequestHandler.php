@@ -2,7 +2,6 @@
 
 namespace Avant\ZohoClient\Books\RequestHandlers;
 
-use Avant\ZohoClient\Books\ZohoBooksClient;
 use Illuminate\Support\Arr;
 use Illuminate\Support\LazyCollection;
 
@@ -16,7 +15,7 @@ class ListRequestHandler extends RequestHandler
                 $result = $this->client
                     ->listRecords($resource, ...$arguments)
                     ->object();
-                foreach ($result->{Arr::get(ZohoBooksClient::RESOURCE_MAP, $resource, $resource)} as $record) {
+                foreach (data_get($result, Arr::get(get_class($this->client)::RESOURCE_MAP, $resource, $resource)) as $record) {
                     yield $record;
                 }
                 $hasMorePage = $result->page_context->has_more_page ?? false;
