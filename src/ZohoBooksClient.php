@@ -3,6 +3,7 @@
 namespace Avant\ZohoClient\Books;
 
 use Avant\ZohoClient\ZohoClient;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Middleware;
 use Psr\Http\Message\RequestInterface;
 use Spatie\GuzzleRateLimiterMiddleware\RateLimiterMiddleware;
@@ -128,7 +129,7 @@ class ZohoBooksClient extends ZohoClient
 
     protected function retryableRequest(callable $callback)
     {
-        return retry(3, $callback, 1000, [$this, 'canRetry']);
+        return retry(3, $callback, 1000, [$this, 'shouldRetry']);
     }
 
     protected function shouldRetry(\Throwable $exception): bool
