@@ -3,24 +3,23 @@
 namespace Avant\ZohoClient\Books;
 
 use Avant\ZohoClient\ZohoClient;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Middleware;
-use GuzzleHttp\RequestOptions;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\LazyCollection;
 use Psr\Http\Message\RequestInterface;
 use Spatie\GuzzleRateLimiterMiddleware\RateLimiterMiddleware;
+use Throwable;
 
 /**
- * @method \Illuminate\Support\LazyCollection listItems($query = null)
- *
- * @method \Illuminate\Support\LazyCollection listBills($query = null)
+ * @method LazyCollection listItems($query = null)
+ * @method LazyCollection listBills($query = null)
  * @method object getBills(string $id)
- *
- * @method \Illuminate\Support\LazyCollection listInvoices($query = null)
+ * @method LazyCollection listInvoices($query = null)
  * @method object getInvoices(string $id)
- *
- * @method \Illuminate\Support\LazyCollection listInventoryAdjustments($query = null)
+ * @method LazyCollection listInventoryAdjustments($query = null)
  * @method object getInventoryAdjustments(string $id)
- *
- * @method \Illuminate\Support\LazyCollection listCreditNotes($query = null)
+ * @method LazyCollection listCreditNotes($query = null)
  * @method object getCreditNotes(string $id)
  */
 class ZohoBooksClient extends ZohoClient
@@ -29,7 +28,6 @@ class ZohoBooksClient extends ZohoClient
         'inventoryadjustments' => 'inventory_adjustments',
         'vendorcredits'        => 'vendor_credits',
     ];
-
     protected string $baseUrl = 'https://www.zohoapis.com/books/v3';
 
     public function __construct($user, protected readonly string $organizationId)
@@ -69,49 +67,66 @@ class ZohoBooksClient extends ZohoClient
 
     public function createRecords(string $resource, $data)
     {
-        return $this->request()
-            ->post($resource, $data)
-            ->throw();
+        return $this->retryOnConnectionFailure(
+            fn () => $this->request()
+                ->post($resource, $data)
+                ->throw()
+        );
     }
 
     public function updateRecords(string $resource, string $id, $data)
     {
-        return $this->request()
-            ->put($resource.'/'.$id, $data)
-            ->throw();
+        return $this->retryOnConnectionFailure(
+            fn () => $this->request()
+                ->put($resource.'/'.$id, $data)
+                ->throw()
+        );
     }
 
     public function listRecords(string $resource, $query = null)
     {
-        return $this->request()
-            ->get($resource, $query)
-            ->throw();
+        return $this->retryOnConnectionFailure(
+            fn () => $this->request()
+                ->get($resource, $query)
+                ->throw()
+        );
     }
 
     public function getRecords(string $resource, string $id)
     {
-        return $this->request()
-            ->get($resource.'/'.$id)
-            ->throw();
+        return $this->retryOnConnectionFailure(
+            fn () => $this->request()
+                ->get($resource.'/'.$id)
+                ->throw()
+        );
     }
 
     public function deleteRecords(string $resource, string $id)
     {
-        return $this->request()
-            ->delete($resource.'/'.$id)
-            ->throw();
+        return $this->retryOnConnectionFailure(
+            fn () => $this->request()
+                ->delete($resource.'/'.$id)
+                ->throw()
+        );
     }
 
     public function uploadImage(string $resource, string $id, string $path)
     {
-        return $this->request()
-            ->attach(
-                'image',
-                fopen($path, 'r'),
-                pathinfo($path, PATHINFO_BASENAME),
-                ['Content-Type' => mime_content_type($path)]
-            )
-            ->post("{$resource}/{$id}/images")
-            ->object();
+        return $this->retryOnConnectionFailure(
+            fn () => $this->request()
+                ->attach(
+                    'image',
+                    fopen($path, 'r'),
+                    pathinfo($path, PATHINFO_BASENAME),
+                    ['Content-Type' => mime_content_type($path)]
+                )
+                ->post("{$resource}/{$id}/images")
+                ->object()
+        );
+    }
+
+    protected function retryOnConnectionFailure(callable $callback)
+    {
+        return retry(3, $callback, 1000, fn (Throwable $exception) => $exception instanceof ConnectionException);
     }
 }
