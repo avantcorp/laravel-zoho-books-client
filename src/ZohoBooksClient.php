@@ -5,22 +5,21 @@ namespace Avant\ZohoClient\Books;
 use Avant\ZohoClient\ZohoClient;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Middleware;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\LazyCollection;
 use Psr\Http\Message\RequestInterface;
 use Spatie\GuzzleRateLimiterMiddleware\RateLimiterMiddleware;
+use Throwable;
 
 /**
- * @method \Illuminate\Support\LazyCollection listItems($query = null)
- *
- * @method \Illuminate\Support\LazyCollection listBills($query = null)
+ * @method LazyCollection listItems($query = null)
+ * @method LazyCollection listBills($query = null)
  * @method object getBills(string $id)
- *
- * @method \Illuminate\Support\LazyCollection listInvoices($query = null)
+ * @method LazyCollection listInvoices($query = null)
  * @method object getInvoices(string $id)
- *
- * @method \Illuminate\Support\LazyCollection listInventoryAdjustments($query = null)
+ * @method LazyCollection listInventoryAdjustments($query = null)
  * @method object getInventoryAdjustments(string $id)
- *
- * @method \Illuminate\Support\LazyCollection listCreditNotes($query = null)
+ * @method LazyCollection listCreditNotes($query = null)
  * @method object getCreditNotes(string $id)
  */
 class ZohoBooksClient extends ZohoClient
@@ -29,7 +28,6 @@ class ZohoBooksClient extends ZohoClient
         'inventoryadjustments' => 'inventory_adjustments',
         'vendorcredits'        => 'vendor_credits',
     ];
-
     protected string $baseUrl = 'https://www.zohoapis.com/books/v3';
 
     public function __construct($user, protected readonly string $organizationId)
@@ -69,7 +67,7 @@ class ZohoBooksClient extends ZohoClient
 
     public function createRecords(string $resource, $data)
     {
-        return $this->retryableRequest(
+        return $this->retryOnConnectionFailure(
             fn () => $this->request()
                 ->post($resource, $data)
                 ->throw()
@@ -78,7 +76,7 @@ class ZohoBooksClient extends ZohoClient
 
     public function updateRecords(string $resource, string $id, $data)
     {
-        return $this->retryableRequest(
+        return $this->retryOnConnectionFailure(
             fn () => $this->request()
                 ->put($resource.'/'.$id, $data)
                 ->throw()
@@ -87,7 +85,7 @@ class ZohoBooksClient extends ZohoClient
 
     public function listRecords(string $resource, $query = null)
     {
-        return $this->retryableRequest(
+        return $this->retryOnConnectionFailure(
             fn () => $this->request()
                 ->get($resource, $query)
                 ->throw()
@@ -96,7 +94,7 @@ class ZohoBooksClient extends ZohoClient
 
     public function getRecords(string $resource, string $id)
     {
-        return $this->retryableRequest(
+        return $this->retryOnConnectionFailure(
             fn () => $this->request()
                 ->get($resource.'/'.$id)
                 ->throw()
@@ -105,7 +103,7 @@ class ZohoBooksClient extends ZohoClient
 
     public function deleteRecords(string $resource, string $id)
     {
-        return $this->retryableRequest(
+        return $this->retryOnConnectionFailure(
             fn () => $this->request()
                 ->delete($resource.'/'.$id)
                 ->throw()
@@ -114,7 +112,7 @@ class ZohoBooksClient extends ZohoClient
 
     public function uploadImage(string $resource, string $id, string $path)
     {
-        return $this->retryableRequest(
+        return $this->retryOnConnectionFailure(
             fn () => $this->request()
                 ->attach(
                     'image',
@@ -127,14 +125,8 @@ class ZohoBooksClient extends ZohoClient
         );
     }
 
-    protected function retryableRequest(callable $callback)
+    protected function retryOnConnectionFailure(callable $callback)
     {
-        return retry(3, $callback, 1000, [$this, 'shouldRetry']);
-    }
-
-    protected function shouldRetry(\Throwable $exception): bool
-    {
-        return $exception instanceof RequestException &&
-            str_contains($exception->getMessage(), 'cURL error 28: SSL connection timeout');
+        return retry(3, $callback, 1000, fn (Throwable $exception) => $exception instanceof ConnectionException);
     }
 }
