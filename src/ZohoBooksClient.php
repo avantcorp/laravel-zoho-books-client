@@ -4,7 +4,6 @@ namespace Avant\ZohoClient\Books;
 
 use Avant\ZohoClient\ZohoClient;
 use GuzzleHttp\Middleware;
-use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\RequestInterface;
 use Spatie\GuzzleRateLimiterMiddleware\RateLimiterMiddleware;
 
@@ -69,49 +68,72 @@ class ZohoBooksClient extends ZohoClient
 
     public function createRecords(string $resource, $data)
     {
-        return $this->request()
-            ->post($resource, $data)
-            ->throw();
+        return $this->retryableRequest(
+            fn () => $this->request()
+                ->post($resource, $data)
+                ->throw()
+        );
     }
 
     public function updateRecords(string $resource, string $id, $data)
     {
-        return $this->request()
-            ->put($resource.'/'.$id, $data)
-            ->throw();
+        return $this->retryableRequest(
+            fn () => $this->request()
+                ->put($resource.'/'.$id, $data)
+                ->throw()
+        );
     }
 
     public function listRecords(string $resource, $query = null)
     {
-        return $this->request()
-            ->get($resource, $query)
-            ->throw();
+        return $this->retryableRequest(
+            fn () => $this->request()
+                ->get($resource, $query)
+                ->throw()
+        );
     }
 
     public function getRecords(string $resource, string $id)
     {
-        return $this->request()
-            ->get($resource.'/'.$id)
-            ->throw();
+        return $this->retryableRequest(
+            fn () => $this->request()
+                ->get($resource.'/'.$id)
+                ->throw()
+        );
     }
 
     public function deleteRecords(string $resource, string $id)
     {
-        return $this->request()
-            ->delete($resource.'/'.$id)
-            ->throw();
+        return $this->retryableRequest(
+            fn () => $this->request()
+                ->delete($resource.'/'.$id)
+                ->throw()
+        );
     }
 
     public function uploadImage(string $resource, string $id, string $path)
     {
-        return $this->request()
-            ->attach(
-                'image',
-                fopen($path, 'r'),
-                pathinfo($path, PATHINFO_BASENAME),
-                ['Content-Type' => mime_content_type($path)]
-            )
-            ->post("{$resource}/{$id}/images")
-            ->object();
+        return $this->retryableRequest(
+            fn () => $this->request()
+                ->attach(
+                    'image',
+                    fopen($path, 'r'),
+                    pathinfo($path, PATHINFO_BASENAME),
+                    ['Content-Type' => mime_content_type($path)]
+                )
+                ->post("{$resource}/{$id}/images")
+                ->object()
+        );
+    }
+
+    protected function retryableRequest(callable $callback)
+    {
+        return retry(3, $callback, 1000, [$this, 'canRetry']);
+    }
+
+    protected function shouldRetry(\Throwable $exception): bool
+    {
+        return $exception instanceof RequestException &&
+            str_contains($exception->getMessage(), 'cURL error 28: SSL connection timeout');
     }
 }
