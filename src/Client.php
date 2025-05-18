@@ -1,11 +1,11 @@
 <?php
 
-namespace Avant\ZohoClient\Books;
+namespace Avant\ZohoBooks;
 
-use Avant\ZohoClient\ZohoClient;
-use GuzzleHttp\Exception\RequestException;
+use Avant\Zoho\Client as ZohoClient;
 use GuzzleHttp\Middleware;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\LazyCollection;
 use Psr\Http\Message\RequestInterface;
 use Spatie\GuzzleRateLimiterMiddleware\RateLimiterMiddleware;
@@ -14,15 +14,16 @@ use Throwable;
 /**
  * @method LazyCollection listItems($query = null)
  * @method LazyCollection listBills($query = null)
- * @method object getBills(string $id)
  * @method LazyCollection listInvoices($query = null)
- * @method object getInvoices(string $id)
  * @method LazyCollection listInventoryAdjustments($query = null)
- * @method object getInventoryAdjustments(string $id)
  * @method LazyCollection listCreditNotes($query = null)
- * @method object getCreditNotes(string $id)
+ * @method object getItem(string $id)
+ * @method object getBill(string $id)
+ * @method object getInvoice(string $id)
+ * @method object getInventoryAdjustment(string $id)
+ * @method object getCreditNote(string $id)
  */
-class ZohoBooksClient extends ZohoClient
+class Client extends ZohoClient
 {
     public const RESOURCE_MAP = [
         'inventoryadjustments' => 'inventory_adjustments',
@@ -30,10 +31,9 @@ class ZohoBooksClient extends ZohoClient
     ];
     protected string $baseUrl = 'https://www.zohoapis.com/books/v3';
 
-    public function __construct($user, protected readonly string $organizationId)
-    {
-        parent::__construct($user);
-    }
+    public function __construct(
+        protected readonly string $organizationId
+    ) {}
 
     public function __call($name, $arguments)
     {
@@ -51,7 +51,7 @@ class ZohoBooksClient extends ZohoClient
             ->handle($resource, $arguments);
     }
 
-    protected function request()
+    protected function request(): PendingRequest
     {
         return parent::request()
             ->withMiddleware(RateLimiterMiddleware::perMinute(100, new RedisStore()))

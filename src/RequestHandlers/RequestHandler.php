@@ -1,17 +1,14 @@
 <?php
 
-namespace Avant\ZohoClient\Books\RequestHandlers;
+namespace Avant\ZohoBooks\RequestHandlers;
 
-use Avant\ZohoClient\Books\ZohoBooksClient;
+use Avant\ZohoBooks\Client;
 
 abstract class RequestHandler
 {
-    protected ZohoBooksClient $client;
-
-    public function __construct(ZohoBooksClient $client)
-    {
-        $this->client = $client;
-    }
+    public function __construct(
+        protected Client $client
+    ) {}
 
     abstract public function handle(string $resource, array $arguments);
 }

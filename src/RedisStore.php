@@ -1,6 +1,6 @@
 <?php
 
-namespace Avant\ZohoClient\Books;
+namespace Avant\ZohoBooks;
 
 use Illuminate\Support\Facades\Cache;
 use Spatie\GuzzleRateLimiterMiddleware\Store;
@@ -12,7 +12,7 @@ class RedisStore implements Store
         return Cache::get('zoho-books-rate-limiter', []);
     }
 
-    public function push(int $timestamp, int $limit)
+    public function push(int $timestamp, int $limit): void
     {
         Cache::put('zoho-books-rate-limiter', array_merge($this->get(), [$timestamp]));
     }
