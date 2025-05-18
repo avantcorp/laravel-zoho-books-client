@@ -4,7 +4,6 @@ namespace Avant\ZohoBooks;
 
 use Avant\ZohoBooks\RequestHandlers\GetRequestHandler;
 use Avant\ZohoBooks\RequestHandlers\ListRequestHandler;
-use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\LazyCollection;
 
 readonly class Module

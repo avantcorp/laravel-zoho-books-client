@@ -2,7 +2,6 @@
 
 namespace Avant\ZohoBooks\RequestHandlers;
 
-use Avant\ZohoBooks\Client;
 use Illuminate\Support\LazyCollection;
 
 class ListRequestHandler extends RequestHandler
