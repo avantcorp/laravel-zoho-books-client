@@ -6,11 +6,15 @@ use Avant\ZohoBooks\Client;
 
 class GetRequestHandler extends RequestHandler
 {
-    public function handle(string $resource, array $arguments)
+    public function __construct(Client $client, string $resource, string $property)
     {
-        $response = $this->client->getRecords($resource, ...$arguments)->object();
-        $mappedResource = str(data_get(Client::RESOURCE_MAP, str($resource)->plural()->toString(), $resource))->singular();
+        parent::__construct($client, $resource, str($property)->singular()->toString());
+    }
 
-        return data_get($response, $mappedResource);
+    public function handle(array $arguments)
+    {
+        $response = $this->client->get($this->resource, ...$arguments)->object();
+
+        return data_get($response, $this->property);
     }
 }

@@ -2,19 +2,19 @@
 
 namespace Avant\ZohoBooks\RequestHandlers;
 
+use Avant\ZohoBooks\Client;
 use Illuminate\Support\LazyCollection;
 
 class ListRequestHandler extends RequestHandler
 {
-    public function handle(string $resource, array $arguments): LazyCollection
+    public function handle(array $arguments): LazyCollection
     {
-        return LazyCollection::make(function () use ($resource, $arguments) {
+        return LazyCollection::make(function () use ($arguments) {
             $hasMorePage = true;
             while ($hasMorePage) {
-                $response = $this->client->listRecords($resource, ...$arguments)->object();
-                $mappedResource = data_get($this->client::RESOURCE_MAP, $resource, $resource);
+                $response = $this->client->list($this->resource, ...$arguments)->object();
 
-                foreach (data_get($response, $mappedResource) as $record) {
+                foreach (data_get($response, $this->property) as $record) {
                     yield $record;
                 }
 

@@ -7,8 +7,8 @@ use Avant\ZohoBooks\Client;
 abstract class RequestHandler
 {
     public function __construct(
-        protected Client $client
+        protected Client $client,
+        protected string $resource,
+        protected string $property,
     ) {}
-
-    abstract public function handle(string $resource, array $arguments);
 }

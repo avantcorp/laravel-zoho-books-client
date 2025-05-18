@@ -6,26 +6,33 @@ use Avant\Zoho\Client as ZohoClient;
 use GuzzleHttp\Middleware;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\LazyCollection;
+use Illuminate\Support\Collection;
 use Psr\Http\Message\RequestInterface;
 use Spatie\GuzzleRateLimiterMiddleware\RateLimiterMiddleware;
 use Throwable;
 
 /**
- * @method LazyCollection listItems($query = null)
- * @method LazyCollection listBills($query = null)
- * @method LazyCollection listInvoices($query = null)
- * @method LazyCollection listInventoryAdjustments($query = null)
- * @method LazyCollection listCreditNotes($query = null)
- * @method object getItem(string $id)
- * @method object getBill(string $id)
- * @method object getInvoice(string $id)
- * @method object getInventoryAdjustment(string $id)
- * @method object getCreditNote(string $id)
+ * @method Module bills()
+ * @method Module creditNotes()
+ * @method Module customerPayments()
+ * @method Module customers()
+ * @method Module estimates()
+ * @method Module expenses()
+ * @method Module inventoryAdjustments()
+ * @method Module invoices()
+ * @method Module items()
+ * @method Module purchaseOrders()
+ * @method Module recurringBills()
+ * @method Module recurringExpenses()
+ * @method Module recurringInvoices()
+ * @method Module salesOrders()
+ * @method Module vendorCredits()
+ * @method Module vendorPayments()
+ * @method Module vendors()
  */
 class Client extends ZohoClient
 {
-    public const RESOURCE_MAP = [
+    private const RESOURCE_MAP = [
         'inventoryadjustments' => 'inventory_adjustments',
         'vendorcredits'        => 'vendor_credits',
     ];
@@ -37,21 +44,12 @@ class Client extends ZohoClient
 
     public function __call($name, $arguments)
     {
-        preg_match('/^(create|update|list|get|delete)(.*)/', $name, $matches);
-        if (count($matches) < 2) {
-            throw new \Exception('Invalid method action specified.');
-        }
-        $action = $matches[1];
-        $resource = strtolower($matches[2]);
-        $responseHandlerClass = '\\Avant\\ZohoClient\\Books\\RequestHandlers\\'.ucfirst($action).'RequestHandler';
-        if (!class_exists($responseHandlerClass)) {
-            return $this->{$action.'Records'}($resource, ...$arguments)->object();
-        }
-        return (new $responseHandlerClass($this))
-            ->handle($resource, $arguments);
+        $module = strtolower($name);
+
+        return new Module($this, $module, data_get(static::RESOURCE_MAP, $module, $module));
     }
 
-    protected function request(): PendingRequest
+    public function request(): PendingRequest
     {
         return parent::request()
             ->withMiddleware(RateLimiterMiddleware::perMinute(100, new RedisStore()))
@@ -65,7 +63,18 @@ class Client extends ZohoClient
             }));
     }
 
-    public function createRecords(string $resource, $data)
+    public function chartOfAccounts(): Collection
+    {
+        $response = $this->retryOnConnectionFailure(
+            fn () => $this->request()
+                ->get('chartofaccounts')
+                ->throw()
+        );
+
+        return collect($response->chartofaccounts);
+    }
+
+    public function create(string $resource, $data)
     {
         return $this->retryOnConnectionFailure(
             fn () => $this->request()
@@ -74,16 +83,16 @@ class Client extends ZohoClient
         );
     }
 
-    public function updateRecords(string $resource, string $id, $data)
+    public function update(string $resource, string $id, $data)
     {
         return $this->retryOnConnectionFailure(
             fn () => $this->request()
-                ->put($resource.'/'.$id, $data)
+                ->put("{$resource}/{$id}", $data)
                 ->throw()
         );
     }
 
-    public function listRecords(string $resource, $query = null)
+    public function list(string $resource, $query = null)
     {
         return $this->retryOnConnectionFailure(
             fn () => $this->request()
@@ -92,20 +101,20 @@ class Client extends ZohoClient
         );
     }
 
-    public function getRecords(string $resource, string $id)
+    public function get(string $resource, string $id)
     {
         return $this->retryOnConnectionFailure(
             fn () => $this->request()
-                ->get($resource.'/'.$id)
+                ->get("{$resource}/{$id}")
                 ->throw()
         );
     }
 
-    public function deleteRecords(string $resource, string $id)
+    public function delete(string $resource, string $id)
     {
         return $this->retryOnConnectionFailure(
             fn () => $this->request()
-                ->delete($resource.'/'.$id)
+                ->delete("{$resource}/{$id}")
                 ->throw()
         );
     }
@@ -125,7 +134,7 @@ class Client extends ZohoClient
         );
     }
 
-    protected function retryOnConnectionFailure(callable $callback)
+    public function retryOnConnectionFailure(callable $callback)
     {
         return retry(3, $callback, 1000, fn (Throwable $exception) => $exception instanceof ConnectionException);
     }

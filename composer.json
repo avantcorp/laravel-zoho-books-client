@@ -12,15 +12,23 @@
     ],
     "require": {
         "php": "^8.2",
+        "ext-fileinfo": "*",
         "avantcorp/laravel-zoho-client": "^4.0",
         "spatie/guzzle-rate-limiter-middleware": "^2.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^10.3"
     },
     "autoload": {
         "psr-4": {
             "Avant\\ZohoBooks\\": "src/"
         }
     },
-    "require-dev": {
-        "orchestra/testbench": "^10.3"
+    "extra": {
+        "laravel": {
+            "providers": [
+                "\\Avant\\ZohoBooks\\ZohoBooksServiceProvider"
+            ]
+        }
     }
 }
