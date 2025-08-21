@@ -78,7 +78,7 @@ class ZohoBooksClient extends ZohoClient
     {
         $baseKey = sprintf('zoho.books.%s.%s', $resource, $id);
 
-        if (cache()->Get(sprintf('%s.skip', $baseKey))) {
+        if (!cache()->get(sprintf('%s.skip', $baseKey), false)) {
             cache()->remember(sprintf('%s.processing', $baseKey), now()->addMinutes(30), fn () => true);
             $result = $this->request()
                 ->put($resource.'/'.$id, $data)
