@@ -76,11 +76,21 @@ class ZohoBooksClient extends ZohoClient
 
     public function updateRecords(string $resource, string $id, $data)
     {
-        return $this->retryOnConnectionFailure(
-            fn () => $this->request()
+        $baseKey = sprintf('zoho.books.%s.%s', $resource, $id);
+
+        if (cache()->Get(sprintf('%s.skip', $baseKey))) {
+            cache()->remember(sprintf('%s.processing', $baseKey), now()->addMinutes(30), fn () => true);
+            $result = $this->request()
                 ->put($resource.'/'.$id, $data)
-                ->throw()
-        );
+                ->throw();
+            cache()->forget(sprintf('%s.processing', $baseKey));
+        } else {
+            $result = $this->getRecords($resource, $id);
+        }
+
+        cache()->forget(sprintf('%s.skip', $baseKey));
+
+        return $result;
     }
 
     public function listRecords(string $resource, $query = null)
